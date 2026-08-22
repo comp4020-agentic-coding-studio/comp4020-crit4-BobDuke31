@@ -1,20 +1,125 @@
 ---
 import Layout from "../layouts/Layout.astro";
+
+// A two-octave piano, C4 to C6, laid out and bound to the physical keyboard
+// the way most "computer keyboard as piano" instruments do: two rows of keys
+// mirror the black/white key pattern, so the shape of the row you press
+// roughly matches the shape of the notes you get.
+const WHITE_KEYS = [
+  { note: "C4", semitone: 0, code: "KeyZ", keyLabel: "Z" },
+  { note: "D4", semitone: 2, code: "KeyX", keyLabel: "X" },
+  { note: "E4", semitone: 4, code: "KeyC", keyLabel: "C" },
+  { note: "F4", semitone: 5, code: "KeyV", keyLabel: "V" },
+  { note: "G4", semitone: 7, code: "KeyB", keyLabel: "B" },
+  { note: "A4", semitone: 9, code: "KeyN", keyLabel: "N" },
+  { note: "B4", semitone: 11, code: "KeyM", keyLabel: "M" },
+  { note: "C5", semitone: 12, code: "KeyQ", keyLabel: "Q" },
+  { note: "D5", semitone: 14, code: "KeyW", keyLabel: "W" },
+  { note: "E5", semitone: 16, code: "KeyE", keyLabel: "E" },
+  { note: "F5", semitone: 17, code: "KeyR", keyLabel: "R" },
+  { note: "G5", semitone: 19, code: "KeyT", keyLabel: "T" },
+  { note: "A5", semitone: 21, code: "KeyY", keyLabel: "Y" },
+  { note: "B5", semitone: 23, code: "KeyU", keyLabel: "U" },
+  { note: "C6", semitone: 24, code: "KeyI", keyLabel: "I" },
+];
+
+// Each black key sits on the boundary right after this white key's index.
+const BLACK_KEYS = [
+  { note: "C♯4", semitone: 1, code: "KeyS", keyLabel: "S", afterWhiteIndex: 0 },
+  { note: "D♯4", semitone: 3, code: "KeyD", keyLabel: "D", afterWhiteIndex: 1 },
+  { note: "F♯4", semitone: 6, code: "KeyG", keyLabel: "G", afterWhiteIndex: 3 },
+  { note: "G♯4", semitone: 8, code: "KeyH", keyLabel: "H", afterWhiteIndex: 4 },
+  { note: "A♯4", semitone: 10, code: "KeyJ", keyLabel: "J", afterWhiteIndex: 5 },
+  { note: "C♯5", semitone: 13, code: "Digit2", keyLabel: "2", afterWhiteIndex: 7 },
+  { note: "D♯5", semitone: 15, code: "Digit3", keyLabel: "3", afterWhiteIndex: 8 },
+  { note: "F♯5", semitone: 18, code: "Digit5", keyLabel: "5", afterWhiteIndex: 10 },
+  { note: "G♯5", semitone: 20, code: "Digit6", keyLabel: "6", afterWhiteIndex: 11 },
+  { note: "A♯5", semitone: 22, code: "Digit7", keyLabel: "7", afterWhiteIndex: 12 },
+];
+
+const WHITE_KEY_WIDTH = 100 / WHITE_KEYS.length;
+const BLACK_KEY_WIDTH = WHITE_KEY_WIDTH * 0.62;
+
+const WAVEFORMS = ["sine", "triangle", "sawtooth", "square"];
 ---
 
 <Layout
-  title="Theremin"
-  description="A pointer-driven theremin — press and drag to play. Left/right changes pitch, up/down changes tone."
+  title="Synth"
+  description="A small live browser synthesizer — a two-octave piano keyboard you can play with your mouse, touch, or computer keyboard."
 >
-  <header>
-    <nav aria-label="Primary">
-      <a href="./">Home</a>
-    </nav>
-  </header>
-  <main id="pad">
-    <h1>Theremin</h1>
-    <p>Press and drag to play</p>
+  <nav aria-label="Primary"></nav>
+  <main id="synth">
+    <h1>Synth</h1>
+    <p class="hint">Two octaves, C4 to C6 — play with your mouse, touch, or keyboard</p>
+
+    <div class="synth-body">
+      <section class="control-panel" aria-label="Sound controls">
+        <canvas id="visualizer" aria-hidden="true"></canvas>
+
+        <div class="control-row">
+          <fieldset id="waveform-control">
+            <legend>Waveform</legend>
+            {
+              WAVEFORMS.map((waveform) => (
+                <button type="button" class="waveform-button" data-waveform={waveform}>
+                  {waveform}
+                </button>
+              ))
+            }
+          </fieldset>
+
+          <div class="control">
+            <label for="tone">Tone</label>
+            <input type="range" id="tone" min="0" max="1" step="0.01" value="0.75" />
+          </div>
+
+          <div class="control" id="octave-control">
+            <span id="octave-label">Octave</span>
+            <button type="button" id="octave-down" aria-label="Octave down">
+              −
+            </button>
+            <output id="octave-value" for="octave-down octave-up">0</output>
+            <button type="button" id="octave-up" aria-label="Octave up">
+              +
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <div class="keyboard-scroll">
+        <div id="keyboard" role="group" aria-label="Piano keyboard, C4 to C6">
+          {
+            WHITE_KEYS.map((key) => (
+              <button
+                type="button"
+                class="key white-key"
+                data-semitone={key.semitone}
+                data-code={key.code}
+                aria-label={`${key.note} (key ${key.keyLabel})`}
+              >
+                <span class="key-note">{key.note}</span>
+                <span class="key-label">{key.keyLabel}</span>
+              </button>
+            ))
+          }
+          {
+            BLACK_KEYS.map((key) => (
+              <button
+                type="button"
+                class="key black-key"
+                data-semitone={key.semitone}
+                data-code={key.code}
+                title={key.note}
+                aria-label={`${key.note} (key ${key.keyLabel})`}
+                style={`left: ${(key.afterWhiteIndex + 1) * WHITE_KEY_WIDTH - BLACK_KEY_WIDTH / 2}%; width: ${BLACK_KEY_WIDTH}%;`}
+              >
+                <span class="key-label">{key.keyLabel}</span>
+              </button>
+            ))
+          }
+        </div>
+      </div>
+    </div>
   </main>
-  <div id="cursor" aria-hidden="true"></div>
   <script src="../scripts/main.ts"></script>
 </Layout>

@@ -3,48 +3,223 @@ body {
   font-family: system-ui, sans-serif;
   line-height: 1.6;
   color: #1a1a1a;
+  background: #e8ebf2;
 }
 
-header {
-  padding: 1rem 2rem;
+nav {
+  height: 0;
 }
 
 a {
   color: #0b5fff;
 }
 
-#pad {
+#synth {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  height: calc(100vh - 4rem);
+  gap: 0.75rem;
+  padding: 1.5rem 1rem 2.5rem;
   text-align: center;
-  background: #f4f6fb;
+}
+
+.hint {
+  margin: 0 0 0.5rem;
+  color: #4b5262;
+}
+
+/* The synth "device": a dark body holding a control panel and the keys,
+   so the page reads as an instrument rather than a form. */
+.synth-body {
+  width: 100%;
+  max-width: 70rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  background: linear-gradient(180deg, #2c2f3a, #1c1e26);
+  border-radius: 1.25rem;
+  padding: 1.25rem;
+  box-shadow: 0 1.5rem 3rem rgba(0, 0, 0, 0.25);
+}
+
+.control-panel {
+  border: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+#visualizer {
+  width: 100%;
+  height: 5rem;
+  background: #0a0c10;
+  border: 1px solid #3a3f4d;
+  border-radius: 0.5rem;
+}
+
+.control-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+}
+
+#waveform-control {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+  border: none;
+  margin: 0;
+  padding: 0;
+}
+
+#waveform-control legend {
+  font-size: 0.8rem;
+  color: #9aa1b3;
+  padding: 0 0.5rem 0 0;
+}
+
+.waveform-button {
+  padding: 0.4rem 0.7rem;
+  border: 1px solid #454b5c;
+  border-radius: 0.4rem;
+  background: #262933;
+  color: #e8ebf2;
+  text-transform: capitalize;
+  font: inherit;
+  cursor: pointer;
+}
+
+.waveform-button.active {
+  background: #5b9dff;
+  color: #101218;
+  border-color: #5b9dff;
+}
+
+.control {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #e8ebf2;
+}
+
+.control label,
+#octave-label {
+  font-size: 0.8rem;
+  color: #9aa1b3;
+}
+
+#octave-control button {
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid #454b5c;
+  border-radius: 0.4rem;
+  background: #262933;
+  color: #e8ebf2;
+  font: inherit;
+  cursor: pointer;
+}
+
+#octave-control button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+#octave-value {
+  min-width: 1.5rem;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The keyboard: two octaves of white keys in a row, black keys positioned
+   by percentage across the same row so the layout stays correct no matter
+   how wide the row renders. */
+.keyboard-scroll {
+  overflow-x: auto;
+  width: 100%;
+}
+
+#keyboard {
+  position: relative;
+  display: flex;
   touch-action: none;
   user-select: none;
 }
 
-#cursor {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 2rem;
-  height: 2rem;
-  margin: -1rem 0 0 -1rem;
-  border-radius: 50%;
-  background: #0b5fff;
-  opacity: 0;
-  transform: translate(-100px, -100px);
+.key {
+  font: inherit;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 0;
+  border-radius: 0 0 0.4rem 0.4rem;
   transition:
-    opacity 0.1s ease,
-    scale 0.1s ease;
-  scale: 0.6;
-  pointer-events: none;
+    background-color 0.08s ease,
+    transform 0.08s ease;
 }
 
-#cursor.active {
-  opacity: 0.5;
-  scale: 1;
+.white-key {
+  flex: 1 1 0;
+  height: clamp(11rem, 40vh, 18rem);
+  background: linear-gradient(180deg, #ffffff, #eef0f4);
+  border: 1px solid #b8bfcf;
+  color: #1a1a1a;
+  padding-bottom: 0.6rem;
+  gap: 0.15rem;
+  z-index: 1;
+}
+
+.white-key.pressed {
+  background: linear-gradient(180deg, #cfe1ff, #a9c8ff);
+  transform: translateY(3px);
+}
+
+.key-note {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.key-label {
+  font-size: 0.7rem;
+  color: #6b7280;
+}
+
+.key-note,
+.key-label {
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.white-key.pressed .key-label {
+  color: #33456e;
+}
+
+.black-key {
+  position: absolute;
+  top: 0;
+  height: 62%;
+  background: linear-gradient(180deg, #34394a, #14161c);
+  border: 1px solid #05060a;
+  border-top: none;
+  color: #e8ebf2;
+  padding-bottom: 0.4rem;
+  z-index: 2;
+}
+
+.black-key .key-label {
+  color: #cfd4e0;
+}
+
+.black-key.pressed {
+  background: linear-gradient(180deg, #5b9dff, #3a6fd6);
+  transform: translateY(3px);
+}
+
+.black-key.pressed .key-label {
+  color: #0a1020;
 }
